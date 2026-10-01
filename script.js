@@ -21,8 +21,6 @@ var listenButtons = document.querySelectorAll('.nav-cta');
 var samplePlayLinks = document.querySelectorAll('.sample-play-link');
 
 if (sampleAudio && samplePlayButton) {
-  samplePlayButton.disabled = true;
-
   function updateListenButtons() {
     listenButtons.forEach(function (button) {
       button.textContent = sampleAudio.paused ? 'Listen now' : 'Pause audio';
@@ -36,15 +34,25 @@ if (sampleAudio && samplePlayButton) {
     sampleAudio.play().catch(function () {
       updateListenButtons();
       if (sampleSubtitle) {
-        sampleSubtitle.textContent = 'Tap play to listen to the sample.';
+        sampleSubtitle.textContent = 'Tap to retry audio.';
       }
     });
+  }
+
+  function scrollToSample() {
+    if (window.matchMedia('(max-width: 950px)').matches) {
+      var playerTop = samplePlayButton.getBoundingClientRect().top + window.scrollY;
+      var headerHeight = document.querySelector('header').getBoundingClientRect().height;
+      window.scrollTo({ top: Math.max(0, playerTop - headerHeight - 20), behavior: 'smooth' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
   document.querySelectorAll('.nav-cta, .sample-play-link').forEach(function (link) {
     link.addEventListener('click', function (event) {
       event.preventDefault();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      scrollToSample();
       if (!sampleAudio.paused) {
         sampleAudio.pause();
       } else {
@@ -54,39 +62,39 @@ if (sampleAudio && samplePlayButton) {
   });
 
   if (new URLSearchParams(window.location.search).get('playSample') === '1') {
-    window.scrollTo({ top: 0 });
-    playSample();
+    scrollToSample();
+    if (sampleSubtitle) {
+      sampleSubtitle.textContent = 'Tap play to listen to the sample.';
+    }
   }
 
   sampleAudio.addEventListener('canplay', function () {
-    samplePlayButton.disabled = false;
     if (sampleSubtitle) {
       sampleSubtitle.textContent = 'Sample affirmation';
     }
   });
 
   sampleAudio.addEventListener('error', function () {
-    samplePlayButton.disabled = true;
     if (sampleSubtitle) {
-      sampleSubtitle.textContent = 'Add audio/BeRenewedSample.m4a to enable playback.';
+      sampleSubtitle.textContent = 'Audio unavailable. Tap to retry.';
     }
   });
 
   sampleAudio.addEventListener('play', function () {
     updateListenButtons();
-    samplePlayButton.innerHTML = '&#10074;&#10074;';
+    samplePlayButton.classList.add('is-playing');
     samplePlayButton.setAttribute('aria-label', 'Pause sample');
   });
 
   sampleAudio.addEventListener('pause', function () {
     updateListenButtons();
-    samplePlayButton.innerHTML = '&#9658;';
+    samplePlayButton.classList.remove('is-playing');
     samplePlayButton.setAttribute('aria-label', 'Play sample');
   });
 
   sampleAudio.addEventListener('ended', function () {
     updateListenButtons();
-    samplePlayButton.innerHTML = '&#9658;';
+    samplePlayButton.classList.remove('is-playing');
     samplePlayButton.setAttribute('aria-label', 'Play sample');
   });
 
